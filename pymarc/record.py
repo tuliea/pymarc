@@ -394,6 +394,46 @@ class Record(object):
         else:
             return self.leader + directory + fields
 
+    def as_alephseq(self, count=0):
+        """
+        returns the record serialized as Aleph Seq
+        """
+        fields = ''
+        directory = '' 
+        offset = 0
+        output = ''
+
+        # build the directory
+        # each element of the directory includes the tag, the byte length of 
+        # the field and the offset from the base address where the field data
+        # can be found
+        output += str(count).zfill(9)+" LDR   L "+self.leader.replace(" ","^")+"\r\n"
+        for field in self.fields:
+            field_data = field.as_alephseq()
+            if self.leader[9] == 'a' or self.force_utf8:
+              field_data = field_data.encode('utf-8')
+            #fields += field_data
+            output += str(count).zfill(9)+" "+field.tag+field_data+"\r\n"
+
+        # the base address where the directory ends and the field data begins
+        base_address = LEADER_LEN + len(directory)
+
+        # figure out the length of the record 
+        record_length = base_address + len(fields)
+        
+        # update the leader with the current record length and base address
+        # the lengths are fixed width and zero padded
+        self.leader = '%05d%s%05d%s' % \
+            (record_length, self.leader[5:12], base_address, self.leader[17:])
+        
+        # return the encoded record
+        if self.leader[9] == 'a' or self.force_utf8:
+            #return self.leader.encode('utf-8') + directory.encode('utf-8') + fields
+            return output.encode('utf-8')
+        else:
+            #return self.leader + directory + fields
+            return output
+
     # alias for backwards compatability
     as_marc21 = as_marc
 

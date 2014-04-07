@@ -35,7 +35,7 @@ class Field(object):
             self.tag = '%03s' % tag
 
         # assume controlfields are numeric only; replicates ruby-marc behavior
-        if self.tag < '010' and self.tag.isdigit():
+        if ((self.tag < '010' and self.tag.isdigit()) or (self.tag.isalpha() and indicators == [])) :
             self.data = data
         else:
             self.indicator1, self.indicator2 = self.indicators = indicators
@@ -181,7 +181,7 @@ class Field(object):
         Returns true or false if the field is considered a control field.
         Control fields lack indicators and subfields.
         """
-        if self.tag < '010' and self.tag.isdigit():
+        if ((self.tag < '010' and self.tag.isdigit()) or (self.tag.isalpha() and hasattr(self, 'indicators') == False):
             return True
         return False
 
@@ -195,6 +195,27 @@ class Field(object):
         for subfield in self:
             marc += SUBFIELD_INDICATOR + subfield[0] + subfield[1]
         return marc + END_OF_FIELD
+
+
+    def as_alephseq(self):
+        """
+        used during conversion of a field to raw marc
+        """
+        if self.is_control_field():
+            return "   L "+self.data 
+        if (len(self.indicator1) == 0):
+            ind1 = " "
+        else:
+            ind1 = self.indicator1
+        if (len(self.indicator2) == 0):
+            ind2 = " "
+        else: 
+            ind2 = self.indicator2
+        
+        marc = ind1 + ind2 + " L "
+        for subfield in self:
+            marc += "$$" + subfield[0] + subfield[1]
+        return marc 
 
     # alias for backwards compatibility
     as_marc21 = as_marc
