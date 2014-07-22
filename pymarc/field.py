@@ -202,7 +202,7 @@ class Field(object):
         used during conversion of a field to raw marc
         """
         if self.is_control_field():
-            return "   L "+self.data 
+            return "   L "+self.data.replace(" ","^") 
         if (len(self.indicator1) == 0):
             ind1 = " "
         else:
